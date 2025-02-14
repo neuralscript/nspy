@@ -16,7 +16,7 @@ def p_statements_single(p):
     '''statements : statement'''
     p[0] = [p[1]]
 
-# Statement: network definition, simulate, visualize, or additional commands
+# Statements: network definition, simulate, visualize, or extra commands
 def p_statement_network(p):
     '''statement : network_def'''
     p[0] = p[1]
@@ -116,20 +116,47 @@ def p_predict_stmt(p):
     '''predict_stmt : PREDICT STRING SEMICOLON'''
     p[0] = ASTNode("predict_stmt", input_path=p[2])
 
-# Property list: one or more properties separated by semicolons
-def p_property_list_multiple(p):
-    '''property_list : property_list property SEMICOLON'''
-    p[0] = p[1]
-    p[0].append(p[2])
+# --- New rules for mathematical functions (vectors, matrices) ---
 
-def p_property_list_single(p):
-    '''property_list : property SEMICOLON'''
+# Allow value to be a vector literal
+def p_value_vector(p):
+    'value : vector_literal'
+    p[0] = p[1]
+
+def p_vector_literal(p):
+    'vector_literal : LSQ expr_list RSQ'
+    p[0] = ('vector', p[2])
+
+def p_expr_list_multiple(p):
+    'expr_list : expr_list COMMA math_term'
+    p[0] = p[1] + [p[3]]
+
+def p_expr_list_single(p):
+    'expr_list : math_term'
     p[0] = [p[1]]
 
-def p_property(p):
-    '''property : IDENTIFIER COLON value'''
-    p[0] = (p[1], p[3])
+def p_math_term_number(p):
+    'math_term : NUMBER'
+    p[0] = p[1]
 
+# Allow value to be a matrix literal
+def p_value_matrix(p):
+    'value : matrix_literal'
+    p[0] = p[1]
+
+def p_matrix_literal(p):
+    'matrix_literal : LSQ matrix_row_list RSQ'
+    p[0] = ('matrix', p[2])
+
+def p_matrix_row_list_multiple(p):
+    'matrix_row_list : matrix_row_list COMMA vector_literal'
+    p[0] = p[1] + [p[3]]
+
+def p_matrix_row_list_single(p):
+    'matrix_row_list : vector_literal'
+    p[0] = [p[1]]
+
+# Value can be a number, identifier, string, vector, or matrix
 def p_value_number(p):
     '''value : NUMBER'''
     p[0] = p[1]
@@ -141,6 +168,8 @@ def p_value_identifier(p):
 def p_value_string(p):
     '''value : STRING'''
     p[0] = p[1]
+
+# --- End of math functions rules ---
 
 # Simulate statement: simulate <network_name> ;
 def p_simulate_stmt(p):
@@ -179,12 +208,6 @@ if __name__ == "__main__":
         output_layer {
             neurons: 10;
             activation: softmax;
-        }
-        connect input_layer -> hidden_layer {
-            weight_init: xavier;
-        }
-        connect hidden_layer -> output_layer {
-            weight_init: xavier;
         }
         training {
             optimizer: Adam;

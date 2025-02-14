@@ -23,11 +23,14 @@ reserved = {
     'simulation':   'SIMULATION',
     'duration':     'DURATION',
     'time_step':    'TIME_STEP',
-    # New reserved words:
     'data':         'DATA',
     'save_model':   'SAVE_MODEL',
     'load_model':   'LOAD_MODEL',
     'predict':      'PREDICT',
+    'vector':       'VECTOR',
+    'matrix':       'MATRIX',
+    'dot':          'DOT',
+    'transpose':    'TRANSPOSE'
 }
 
 # List of token names
@@ -43,6 +46,8 @@ tokens = [
     'LPAREN',
     'RPAREN',
     'ARROW',
+    'LSQ',
+    'RSQ'
 ] + list(reserved.values())
 
 # Regular expressions for tokens
@@ -54,6 +59,8 @@ t_RBRACE     = r'\}'
 t_LPAREN     = r'\('
 t_RPAREN     = r'\)'
 t_ARROW      = r'->'
+t_LSQ        = r'\['
+t_RSQ        = r'\]'
 
 # Token for string literals (double quotes)
 def t_STRING(t):
@@ -101,4 +108,4 @@ if __name__ == "__main__":
     data = 'network MyNetwork type ANN { input_layer { neurons: 784; } }'
     lexer.input(data)
     for token in lexer:
-        print(token)
+        pri

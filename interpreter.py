@@ -20,9 +20,9 @@ def interpret_neuroscript(code):
     """
     Interprets NeuroScript DSL code on the fly.
     Parses the code, generates Python code, and executes it in the current global context.
-    
+
     Args:
-      code (str): The NeuroScript DSL code.
+        code (str): The NeuroScript DSL code.
     """
     parsed_ast = parser.parse(code)
     if not parsed_ast:

@@ -2,9 +2,7 @@
 
 ## Overview
 
-NeuroScript is a domain-specific language (DSL) designed for describing, simulating, and visualizing neural networks—both traditional artificial neural networks (ANN) and spiking neural networks (SNN). The DSL is transpiled into Python code using PyTorch (for ANN) and Brian2 (for SNN). It supports specifying network architectures, training configurations, data input, model saving/loading, and predictions.
-
----
+NeuroScript is a domain-specific language (DSL) designed for describing, simulating, and visualizing neural networks—both traditional Artificial Neural Networks (ANN) and spiking/biological Neural Networks (SNN). The DSL is transpiled into Python code using PyTorch (for ANN) and Brian2 (for SNN). It supports various training methods, model save/load, data input/output, and on‑the‑fly code interpretation.
 
 ## Syntax
 
@@ -16,8 +14,6 @@ network MyNetwork type ANN {
 }
 ```
 Supported types: `ANN`, `SNN`.
-
----
 
 ### 2. Layers
 For ANN:
@@ -36,15 +32,13 @@ output_layer {
     activation: softmax;
 }
 ```
-For SNN (use generic layer):
+For SNN (using generic layers):
 ```neuroscript
 layer LayerName {
     neurons: 100;
     type: Excitatory;
 }
 ```
-
----
 
 ### 3. Connections
 Define connections between layers:
@@ -54,91 +48,99 @@ connect input_layer -> hidden_layer {
 }
 ```
 
----
-
 ### 4. Training Parameters
-Define training parameters including optimizer, loss, epochs, batch size, and additional training options:
+Specify training settings including optimizer, learning rate, loss function, epochs, batch size, and optional scheduler parameters:
 ```neuroscript
 training {
-    optimizer: Adam;
-    lr: 0.001;
+    optimizer: SGD;
+    lr: 0.01;
+    momentum: 0.9;
     loss: cross_entropy;
     epochs: 10;
-    batch_size: 64;
+    batch_size: 32;
     scheduler: StepLR;
     step_size: 5;
-    gamma: 0.1;
+    gamma: 0.5;
 }
 ```
 
----
-
 ### 5. Data Input
-Specify data for training or prediction:
+Define data sources for training or prediction:
 ```neuroscript
 data {
     train: "train_data.csv";
 }
 ```
 
----
-
 ### 6. Model Save/Load and Prediction
+Commands for saving, loading, and predicting:
 ```neuroscript
 save_model "mymodel.pth";
 load_model "mymodel.pth";
 predict "predict_input.csv";
 ```
 
----
+### 7. Mathematical Functions
+NeuroScript supports vector and matrix literals.
 
-### 7. Simulation and Visualization
+**Vector literal:**
+```neuroscript
+vector [1, 2, 3.5, 4]
+```
+
+**Matrix literal:**
+```neuroscript
+matrix [[1, 2], [3, 4]]
+```
+These literals can be used for specifying weight initializations or other mathematical parameters.
+
+### 8. Simulation and Visualization
+Execute simulation and visualization commands:
 ```neuroscript
 simulate MyNetwork;
 visualize MyNetwork;
 ```
 
----
-
 ## Execution Modes
 
-### CLI Mode
-Run a DSL file:
-```bash
-python main.py examples/ann_example.ns
-```
-Or pass code as a string:
-```bash
-python main.py "network MyNetwork type ANN { ... }" -s
-```
+- **CLI Mode:**  
+  Run a DSL file:
+  ```bash
+  python main.py examples/ann_example.ns
+  ```
+  Or pass DSL code as a string:
+  ```bash
+  python main.py "network MyNetwork type ANN { ... }" -s
+  ```
+  Optionally, specify an output filename:
+  ```bash
+  python main.py examples/ann_example.ns -o MyNetwork.py
+  ```
 
-### Python API Mode
-Import the `interpret_neuroscript` function from `interpreter.py`:
-```python
-from interpreter import interpret_neuroscript
-
-dsl_code = '''
-network MyNetwork type ANN {
-    ...
-}
-simulate MyNetwork;
-'''
-interpret_neuroscript(dsl_code)
-```
-
----
+- **Python API (On-the-Fly Interpretation):**  
+  Import and call the interpreter:
+  ```python
+  from interpreter import interpret_neuroscript
+  
+  dsl_code = '''
+  network MyNetwork type ANN {
+      // DSL code here...
+  }
+  simulate MyNetwork;
+  visualize MyNetwork;
+  '''
+  interpret_neuroscript(dsl_code)
+  ```
 
 ## Training Methods
 
-NeuroScript supports various training methods through DSL parameters:
-- **Optimizers:** `Adam`, `SGD`, etc.
-- **Learning Rate:** Specify using `lr`.
-- **Schedulers:** For example, `StepLR` with `step_size` and `gamma`.
-- **Additional Parameters:** For SGD, you can also provide `momentum`.
+NeuroScript supports multiple training methods:
+- **Optimizers:** Choose from Adam, SGD, etc.
+- **Learning Rate:** Set with the `lr` parameter.
+- **Schedulers:** For example, StepLR (with `step_size` and `gamma`).
+- **Additional Options:** Such as momentum for SGD.
 
-The generated Python code includes a training loop that uses the specified parameters.
-
----
+The generated Python code will include a training loop that iterates through epochs and batches as defined in the DSL.
 
 ## Example
 
@@ -182,11 +184,11 @@ simulate MyNetwork;
 visualize MyNetwork;
 ```
 
----
-
 ## Conclusion
 
-NeuroScript provides a high-level, human-readable way to define neural network architectures, training procedures, and data operations, which are automatically converted into executable Python code. This documentation outlines the DSL’s syntax and capabilities to help you get started.
+NeuroScript provides a high-level, human-readable way to define neural network architectures, training procedures, and data operations, which are automatically converted into executable Python code. For further details and examples, please refer to this documentation and the source code in the repository.
+```
 
-For further details, please refer to the source code and examples provided in this repository.
+---
 
+These are the new files added to the project. If you need further modifications or additional files, please let me know!
