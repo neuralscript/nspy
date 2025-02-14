@@ -5,7 +5,7 @@ def generate_ann_code(network_ast):
     Generates Python code for an Artificial Neural Network (ANN) based on the AST produced from NeuroScript DSL.
     
     Args:
-      network_ast: An ASTNode of type "network_def". It is expected to contain:
+      network_ast: An ASTNode of type "network_def". Expected to contain:
          - name: the network name
          - net_type: the network type (e.g., "ANN")
          - body: a list of elements (layer definitions, connections, training parameters, etc.)
@@ -17,7 +17,7 @@ def generate_ann_code(network_ast):
     network_name = network_ast.children.get("name")
     body = network_ast.children.get("body", [])
     
-    # Collect layer definitions and training parameters
+    # Collect layer definitions, training parameters, and extra commands
     layer_nodes = []
     training_node = None
     extra_nodes = []  # For data, save_model, load_model, predict commands
@@ -88,14 +88,26 @@ def generate_ann_code(network_ast):
     code_lines.append("        return x")
     code_lines.append("")
     
-    # Create an instance of the model, optimizer and loss function if training parameters exist
+    # Create an instance of the model, optimizer, and loss function
     code_lines.append(f"model = {network_name}()")
     if training_node:
         train_props = { key: value for key, value in training_node.children.get("properties", []) }
-        optimizer = train_props.get("optimizer", "Adam")
-        loss = train_props.get("loss", "cross_entropy")
-        code_lines.append("optimizer = optim.Adam(model.parameters())")
-        if isinstance(loss, str) and loss.lower() == "cross_entropy":
+        optimizer_name = train_props.get("optimizer", "Adam")
+        lr = train_props.get("lr", 0.001)
+        # Create optimizer with specified learning rate and any additional parameters (e.g., momentum)
+        if optimizer_name.lower() == "sgd":
+            momentum = train_props.get("momentum", 0.9)
+            code_lines.append(f"optimizer = optim.SGD(model.parameters(), lr={lr}, momentum={momentum})")
+        else:
+            code_lines.append(f"optimizer = optim.{optimizer_name}(model.parameters(), lr={lr})")
+        if "scheduler" in train_props:
+            scheduler_type = train_props.get("scheduler")
+            if scheduler_type.lower() == "steplr":
+                step_size = train_props.get("step_size", 10)
+                gamma = train_props.get("gamma", 0.1)
+                code_lines.append(f"scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size={step_size}, gamma={gamma})")
+        loss_value = train_props.get("loss", "cross_entropy")
+        if isinstance(loss_value, str) and loss_value.lower() == "cross_entropy":
             code_lines.append("criterion = nn.CrossEntropyLoss()")
         else:
             code_lines.append("criterion = None  # Loss function not implemented")
@@ -105,7 +117,7 @@ def generate_ann_code(network_ast):
     # Process extra nodes: data, save_model, load_model, predict
     for node in extra_nodes:
         if node.node_type == "data_def":
-            data_props = { k: v for k,v in node.children.get("properties", []) }
+            data_props = { k: v for k, v in node.children.get("properties", []) }
             if "train" in data_props:
                 train_path = data_props["train"]
                 code_lines.append("")
@@ -118,17 +130,18 @@ def generate_ann_code(network_ast):
                 code_lines.append("dataset = TensorDataset(inputs, targets)")
                 batch_size = train_props.get("batch_size", 32)
                 code_lines.append(f"train_loader = DataLoader(dataset, batch_size={batch_size}, shuffle=True)")
-                if training_node:
-                    epochs = train_props.get("epochs", 1)
-                    code_lines.append("")
-                    code_lines.append("for epoch in range({}):".format(epochs))
-                    code_lines.append("    for batch_inputs, batch_targets in train_loader:")
-                    code_lines.append("        optimizer.zero_grad()")
-                    code_lines.append("        outputs = model(batch_inputs)")
-                    code_lines.append("        loss_value = criterion(outputs, batch_targets)")
-                    code_lines.append("        loss_value.backward()")
-                    code_lines.append("        optimizer.step()")
-                    code_lines.append("    print(f'Epoch {epoch+1}/{}, Loss: {loss_value.item()}')".format(epochs))
+                epochs = train_props.get("epochs", 1)
+                code_lines.append("")
+                code_lines.append("for epoch in range({}):".format(epochs))
+                code_lines.append("    for batch_inputs, batch_targets in train_loader:")
+                code_lines.append("        optimizer.zero_grad()")
+                code_lines.append("        outputs = model(batch_inputs)")
+                code_lines.append("        loss_value = criterion(outputs, batch_targets)")
+                code_lines.append("        loss_value.backward()")
+                code_lines.append("        optimizer.step()")
+                if "scheduler" in train_props:
+                    code_lines.append("    scheduler.step()")
+                code_lines.append("    print(f'Epoch {epoch+1}/{}, Loss: {loss_value.item()}')".format(epochs))
         elif node.node_type == "save_model_stmt":
             save_path = node.children.get("path")
             code_lines.append(f'\ntorch.save(model.state_dict(), "{save_path}")')
@@ -159,7 +172,13 @@ if __name__ == "__main__":
             ASTNode("layer_def", layer_type="input_layer", properties=[("neurons", 784)]),
             ASTNode("layer_def", layer_type="hidden_layer", properties=[("neurons", 128), ("activation", "relu")]),
             ASTNode("layer_def", layer_type="output_layer", properties=[("neurons", 10), ("activation", "softmax")]),
-            ASTNode("training_def", properties=[("optimizer", "Adam"), ("loss", "cross_entropy"), ("epochs", 5), ("batch_size", 64)]),
+            ASTNode("training_def", properties=[
+                ("optimizer", "Adam"), 
+                ("lr", 0.001), 
+                ("loss", "cross_entropy"),
+                ("epochs", 5), 
+                ("batch_size", 64)
+            ]),
             ASTNode("data_def", properties=[("train", "train_data.csv")]),
             ASTNode("save_model_stmt", path="mymodel.pth"),
             ASTNode("predict_stmt", input_path="predict_input.csv")
