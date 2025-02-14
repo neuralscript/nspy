@@ -187,8 +187,3 @@ visualize MyNetwork;
 ## Conclusion
 
 NeuroScript provides a high-level, human-readable way to define neural network architectures, training procedures, and data operations, which are automatically converted into executable Python code. For further details and examples, please refer to this documentation and the source code in the repository.
-```
-
----
-
-These are the new files added to the project. If you need further modifications or additional files, please let me know!
