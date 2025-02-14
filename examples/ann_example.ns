@@ -1,0 +1,41 @@
+// Example DSL for an Artificial Neural Network (ANN)
+network MyNetwork type ANN {
+    input_layer {
+        neurons: 784;
+    }
+    
+    hidden_layer {
+        neurons: 128;
+        activation: relu;
+    }
+    
+    output_layer {
+        neurons: 10;
+        activation: softmax;
+    }
+    
+    connect input_layer -> hidden_layer {
+        weight_init: xavier;
+    }
+    
+    connect hidden_layer -> output_layer {
+        weight_init: xavier;
+    }
+    
+    training {
+        optimizer: Adam;
+        loss: cross_entropy;
+        epochs: 5;
+        batch_size: 64;
+    }
+    
+    data {
+        train: "train_data.csv";
+    }
+    
+    save_model "mymodel.pth";
+    predict "predict_input.csv";
+}
+
+simulate MyNetwork;
+visualize MyNetwork;

@@ -1,0 +1,49 @@
+// Example DSL for a Spiking Neural Network (SNN)
+network BioNet type SNN {
+    neuron_type Excitatory {
+        threshold: -55*mV;
+        reset_potential: -70*mV;
+        refractory_period: 5*ms;
+    }
+    
+    neuron_type Inhibitory {
+        threshold: -50*mV;
+        reset_potential: -65*mV;
+        refractory_period: 2*ms;
+    }
+    
+    layer ExcitatoryLayer {
+        neurons: 100;
+        type: Excitatory;
+    }
+    
+    layer InhibitoryLayer {
+        neurons: 30;
+        type: Inhibitory;
+    }
+    
+    connect ExcitatoryLayer -> InhibitoryLayer {
+        delay: 1*ms;
+        weight: 0.5;
+    }
+    
+    connect InhibitoryLayer -> ExcitatoryLayer {
+        delay: 0.5*ms;
+        weight: -0.7;
+    }
+    
+    simulation {
+        duration: 500*ms;
+        time_step: 0.1*ms;
+    }
+    
+    data {
+        train: "train_data.csv";
+    }
+    
+    save_model "snnmodel.txt";
+    predict "predict_input.csv";
+}
+
+simulate BioNet;
+visualize BioNet;
